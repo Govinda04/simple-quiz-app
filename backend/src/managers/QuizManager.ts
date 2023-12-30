@@ -1,5 +1,7 @@
-import { AllowedSubmission, Quiz } from "../Quiz";
+import { AllowedSubmission, Problem, Quiz } from "../Quiz";
 import { IOManger } from "./IOManger";
+
+let globalProblemId = 0;
 
 export class QuizManager {
   private quizes: Quiz[];
@@ -19,9 +21,53 @@ export class QuizManager {
     // });
   }
 
+  public next(roomId: string) {
+    const quiz = this.getQuiz(roomId);
+    if (!quiz) {
+      return;
+    }
+    quiz.next();
+    // IOManger.getIO().to(roomId).emit("next_problem");
+  }
+
   // submit
   addUser(roomId: string, name: string) {
     return this.getQuiz(roomId)?.addUser(name);
+  }
+
+  public createQuiz(roomId: string) {
+    let quiz = this.getQuiz(roomId);
+    if (quiz) {
+      return;
+    }
+    quiz = new Quiz(roomId);
+    this.quizes.push(quiz);
+  }
+
+  public addProblemToQuiz(
+    roomId: string,
+    problem: {
+      title: string;
+      description: string;
+      image?: string;
+      options: {
+        id: number;
+        title: string;
+      }[];
+      answer: AllowedSubmission;
+    }
+  ) {
+    const quiz = this.getQuiz(roomId);
+    if (!quiz) {
+      return;
+    }
+
+    quiz.addProblem({
+      ...problem,
+      startTime: new Date().getTime(),
+      submissions: [],
+      id: `${globalProblemId++}`,
+    });
   }
 
   getQuiz(roomId: string) {

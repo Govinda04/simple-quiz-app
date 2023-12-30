@@ -15,16 +15,16 @@ interface Submission {
 export type AllowedSubmission = 0 | 1 | 2 | 3;
 
 const PROBLEM_TIME_S = 20;
-interface Problem {
+export interface Problem {
   id: string;
   title: string;
   description: string;
-  image: string;
+  image?: string;
   answer: AllowedSubmission; //0,1,2,3
-  option: {
+  options: {
     id: number;
     title: string;
-  };
+  }[];
   startTime: number;
 
   submissions: Submission[];
@@ -57,6 +57,7 @@ export class Quiz {
 
   addProblem(problem: Problem) {
     this.problems.push(problem);
+    console.log(this.problems);
   }
 
   start() {
@@ -64,6 +65,8 @@ export class Quiz {
     const io = IOManger.getIO();
     this.setActiveProblem(this.problems[0]);
     this.problems[this.activeProblems].startTime = new Date().getTime();
+
+    console.log(this.problems);
   }
 
   setActiveProblem(problem: Problem) {
