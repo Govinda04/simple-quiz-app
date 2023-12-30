@@ -22,7 +22,6 @@ class QuizManager {
             return;
         }
         quiz.next();
-        // IOManger.getIO().to(roomId).emit("next_problem");
     }
     // submit
     addUser(roomId, name) {
@@ -43,6 +42,8 @@ class QuizManager {
             return;
         }
         quiz.addProblem(Object.assign(Object.assign({}, problem), { startTime: new Date().getTime(), submissions: [], id: `${globalProblemId++}` }));
+        console.log("problem added");
+        // console.log("quiz; ", JSON.stringify(quiz, null, 2));
     }
     getQuiz(roomId) {
         var _a;

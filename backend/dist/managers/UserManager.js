@@ -1,47 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UseManager = void 0;
+exports.UserManager = void 0;
 const QuizManager_1 = require("./QuizManager");
 const ADMIN_PASSWORD = "adminPass";
-class UseManager {
+class UserManager {
     constructor() {
-        this.users = [];
+        // this.users = [];
         this.quizManger = new QuizManager_1.QuizManager();
     }
-    addUser(roomId, socket) {
-        this.users.push({
-            roomId,
-            socket,
-        });
-        this.createHandlers(roomId, socket);
+    addUser(socket) {
+        // this.users.push({
+        //   roomId,
+        //   socket,
+        // });
+        this.createHandlers(socket);
     }
-    createHandlers(roomId, socket) {
+    createHandlers(socket) {
         socket.on("join", (data) => {
             const userId = this.quizManger.addUser(data.roomId, data.name);
             socket.emit("userId", {
                 userId,
-                state: this.quizManger.getCurrentState(roomId),
+                state: this.quizManger.getCurrentState(data.roomId),
             });
         });
         socket.on("join_admin", (data) => {
-            const userId = this.quizManger.addUser(data.roomId, data.name);
+            console.log("admin joined : ", data);
             if (data.password !== ADMIN_PASSWORD) {
                 return;
             }
-            socket.emit("adminInit", {
-                userId,
-                state: this.quizManger.getCurrentState(roomId),
-            });
-            socket.on("createQuiz", (data) => {
+            socket.on("create_quiz", (data) => {
                 this.quizManger.createQuiz(data.roomId);
             });
-            socket.on("startQuiz", (data) => {
+            socket.on("start_quiz", (data) => {
                 this.quizManger.start(data.roomId);
             });
-            socket.on("createProblem", (data) => {
+            socket.on("create_problem", (data) => {
                 this.quizManger.addProblemToQuiz(data.roomId, data.problem);
             });
-            socket.on("next", (data) => {
+            socket.on("next_problem", (data) => {
+                console.log("next_problem: ", data);
                 this.quizManger.next(data.roomId);
             });
         });
@@ -56,8 +53,8 @@ class UseManager {
                 console.error("Not A Valid Response: ", submission);
             }
             // QuizManager.submit(data);
-            this.quizManger.submit(userId, roomId, problemId, submission);
+            this.quizManger.submit(userId, data.roomId, problemId, submission);
         });
     }
 }
-exports.UseManager = UseManager;
+exports.UserManager = UserManager;

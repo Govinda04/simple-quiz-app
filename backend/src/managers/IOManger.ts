@@ -10,7 +10,12 @@ export class IOManger {
   public static getIO() {
     if (!this.instance) {
       this.instance = new IOManger();
-      const io = new Server(server);
+      const io = new Server(server, {
+        cors: {
+          origin: "*",
+          methods: ["GET", "POST"],
+        },
+      });
       this.io = io;
     }
 

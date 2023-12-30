@@ -30,18 +30,25 @@ export interface Problem {
   submissions: Submission[];
 }
 
-enum CURR_STATE {
-  "leaderboard",
-  "question",
-  "not_started",
-  "ended",
-}
+// enum CURR_STATE {
+//   "leaderboard",
+//   "question",
+//   "not_started",
+//   "ended",
+// }
+
+const CURR_STATE = {
+  leaderboard: "leaderboard",
+  question: "question",
+  not_started: "not_started",
+  ended: "ended",
+};
 
 export class Quiz {
   public roomId: string;
   private hasStarted: boolean;
-  private activeProblems: number;
-  private currentState: CURR_STATE;
+  private activeProblem: number;
+  private currentState: string;
 
   private problems: Problem[];
   private users: User[];
@@ -50,23 +57,37 @@ export class Quiz {
     this.roomId = roomId;
     this.hasStarted = false;
     this.problems = [];
-    this.activeProblems = 0;
+    this.activeProblem = 0;
     this.users = [];
     this.currentState = CURR_STATE.not_started;
+
+    setInterval(() => {
+      this.debug();
+    }, 10000);
+  }
+
+  debug() {
+    console.log("----debug---");
+    console.log(this.roomId);
+    console.log(JSON.stringify(this.problems));
+    console.log(this.users);
+    console.log(this.currentState);
+    console.log(this.activeProblem);
   }
 
   addProblem(problem: Problem) {
     this.problems.push(problem);
-    console.log(this.problems);
+    // console.log(this.problems);
   }
 
   start() {
+    this.currentState = CURR_STATE.question;
     this.hasStarted = true;
     const io = IOManger.getIO();
     this.setActiveProblem(this.problems[0]);
-    this.problems[this.activeProblems].startTime = new Date().getTime();
+    this.problems[this.activeProblem].startTime = new Date().getTime();
 
-    console.log(this.problems);
+    // console.log(this.problems);
   }
 
   setActiveProblem(problem: Problem) {
@@ -74,26 +95,32 @@ export class Quiz {
     problem.submissions = [];
     IOManger.getIO().emit("CHANGE_PROBLEM", { problem });
     setTimeout(() => {
-      this.semdLeaderBoard();
+      this.sendLeaderBoard();
     }, PROBLEM_TIME_S * 1000);
   }
 
-  semdLeaderBoard() {
+  sendLeaderBoard() {
+    this.currentState = CURR_STATE.leaderboard;
     const leaderboard = this.getLeaderboard();
     IOManger.getIO().to(this.roomId).emit("leaderboard", {
       leaderboard,
     });
   }
 
-  next() {
-    this.activeProblems++;
-    const problem = this.problems[this.activeProblems];
+  next = () => {
+    this.currentState = CURR_STATE.question;
+    this.activeProblem++;
+    const problem = this.problems[this.activeProblem];
     if (problem) {
       this.setActiveProblem(problem);
     } else {
+      this.currentState = CURR_STATE.ended;
       // IOManger.getIO().emit("QUIZ_END", {});
     }
-  }
+
+    console.log("---going to next prob");
+    this.debug();
+  };
 
   genRandonString(length: number) {
     var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()";
@@ -175,7 +202,7 @@ export class Quiz {
     if (this.currentState === CURR_STATE.question) {
       return {
         type: CURR_STATE.question,
-        problem: this.problems[this.activeProblems],
+        problem: this.problems[this.activeProblem],
       };
     }
   }

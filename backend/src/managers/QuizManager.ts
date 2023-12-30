@@ -27,7 +27,6 @@ export class QuizManager {
       return;
     }
     quiz.next();
-    // IOManger.getIO().to(roomId).emit("next_problem");
   }
 
   // submit
@@ -68,6 +67,8 @@ export class QuizManager {
       submissions: [],
       id: `${globalProblemId++}`,
     });
+    console.log("problem added");
+    // console.log("quiz; ", JSON.stringify(quiz, null, 2));
   }
 
   getQuiz(roomId: string) {

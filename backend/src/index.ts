@@ -1,21 +1,26 @@
 import { IOManger } from "./managers/IOManger";
+import { UserManager } from "./managers/UserManager";
 
 const io = IOManger.getIO();
 
-io.on("connection", (client) => {
-  client.on("event", (data) => {
-    console.log("Event recieved: ", data);
+const userManger = new UserManager();
 
-    // 3 admin events
+io.on("connection", (socket) => {
+  userManger.addUser(socket);
 
-    //  2 client events
+  // socket.on("join_admin", (data) => {
+  //   console.log("Event recieved: ", data);
 
-    // UserMmanger => QuizManager => Quiz => broadcast
+  //   // 3 admin events
 
-    //
-  });
-  client.on("disconnect", () => {
-    console.log("User Desconnected");
+  //   //  2 client events
+
+  //   // UserMmanger => QuizManager => Quiz => broadcast
+
+  //   //
+  // });
+  socket.on("disconnect", () => {
+    console.log("User Disconnected");
   });
 });
 

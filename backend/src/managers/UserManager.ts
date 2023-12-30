@@ -4,49 +4,43 @@ import { QuizManager } from "./QuizManager";
 
 const ADMIN_PASSWORD = "adminPass";
 
-export class UseManager {
-  private users: {
-    roomId: string;
-    socket: Socket;
-  }[];
+export class UserManager {
+  // private users: {
+  //   roomId: string;
+  //   socket: Socket;
+  // }[];
 
   private quizManger: QuizManager;
 
   constructor() {
-    this.users = [];
+    // this.users = [];
     this.quizManger = new QuizManager();
   }
 
-  addUser(roomId: string, socket: Socket) {
-    this.users.push({
-      roomId,
-      socket,
-    });
+  addUser(socket: Socket) {
+    // this.users.push({
+    //   roomId,
+    //   socket,
+    // });
 
-    this.createHandlers(roomId, socket);
+    this.createHandlers(socket);
   }
 
-  private createHandlers(roomId: string, socket: Socket) {
+  private createHandlers(socket: Socket) {
     socket.on("join", (data) => {
       const userId = this.quizManger.addUser(data.roomId, data.name);
 
       socket.emit("userId", {
         userId,
-        state: this.quizManger.getCurrentState(roomId),
+        state: this.quizManger.getCurrentState(data.roomId),
       });
     });
 
     socket.on("join_admin", (data) => {
-      const userId = this.quizManger.addUser(data.roomId, data.name);
-
+      console.log("admin joined : ", data);
       if (data.password !== ADMIN_PASSWORD) {
         return;
       }
-
-      socket.emit("admin_init", {
-        userId,
-        state: this.quizManger.getCurrentState(roomId),
-      });
 
       socket.on("create_quiz", (data) => {
         this.quizManger.createQuiz(data.roomId);
@@ -60,7 +54,8 @@ export class UseManager {
         this.quizManger.addProblemToQuiz(data.roomId, data.problem);
       });
 
-      socket.on("next", (data) => {
+      socket.on("next_problem", (data) => {
+        console.log("next_problem: ", data);
         this.quizManger.next(data.roomId);
       });
     });
@@ -79,7 +74,7 @@ export class UseManager {
         console.error("Not A Valid Response: ", submission);
       }
       // QuizManager.submit(data);
-      this.quizManger.submit(userId, roomId, problemId, submission);
+      this.quizManger.submit(userId, data.roomId, problemId, submission);
     });
   }
 }

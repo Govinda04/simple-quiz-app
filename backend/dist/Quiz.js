@@ -3,56 +3,78 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Quiz = void 0;
 const IOManger_1 = require("./managers/IOManger");
 const PROBLEM_TIME_S = 20;
-var CURR_STATE;
-(function (CURR_STATE) {
-    CURR_STATE[CURR_STATE["leaderboard"] = 0] = "leaderboard";
-    CURR_STATE[CURR_STATE["question"] = 1] = "question";
-    CURR_STATE[CURR_STATE["not_started"] = 2] = "not_started";
-    CURR_STATE[CURR_STATE["ended"] = 3] = "ended";
-})(CURR_STATE || (CURR_STATE = {}));
+// enum CURR_STATE {
+//   "leaderboard",
+//   "question",
+//   "not_started",
+//   "ended",
+// }
+const CURR_STATE = {
+    leaderboard: "leaderboard",
+    question: "question",
+    not_started: "not_started",
+    ended: "ended",
+};
 class Quiz {
     constructor(roomId) {
+        this.next = () => {
+            this.currentState = CURR_STATE.question;
+            this.activeProblem++;
+            const problem = this.problems[this.activeProblem];
+            if (problem) {
+                this.setActiveProblem(problem);
+            }
+            else {
+                this.currentState = CURR_STATE.ended;
+                // IOManger.getIO().emit("QUIZ_END", {});
+            }
+            console.log("---going to next prob");
+            this.debug();
+        };
         this.roomId = roomId;
         this.hasStarted = false;
         this.problems = [];
-        this.activeProblems = 0;
+        this.activeProblem = 0;
         this.users = [];
         this.currentState = CURR_STATE.not_started;
+        setInterval(() => {
+            this.debug();
+        }, 10000);
+    }
+    debug() {
+        console.log("----debug---");
+        console.log(this.roomId);
+        console.log(JSON.stringify(this.problems));
+        console.log(this.users);
+        console.log(this.currentState);
+        console.log(this.activeProblem);
     }
     addProblem(problem) {
         this.problems.push(problem);
-        console.log(this.problems);
+        // console.log(this.problems);
     }
     start() {
+        this.currentState = CURR_STATE.question;
         this.hasStarted = true;
         const io = IOManger_1.IOManger.getIO();
         this.setActiveProblem(this.problems[0]);
-        this.problems[this.activeProblems].startTime = new Date().getTime();
-        console.log(this.problems);
+        this.problems[this.activeProblem].startTime = new Date().getTime();
+        // console.log(this.problems);
     }
     setActiveProblem(problem) {
         problem.startTime = new Date().getTime();
         problem.submissions = [];
         IOManger_1.IOManger.getIO().emit("CHANGE_PROBLEM", { problem });
         setTimeout(() => {
-            this.semdLeaderBoard();
+            this.sendLeaderBoard();
         }, PROBLEM_TIME_S * 1000);
     }
-    semdLeaderBoard() {
+    sendLeaderBoard() {
+        this.currentState = CURR_STATE.leaderboard;
         const leaderboard = this.getLeaderboard();
         IOManger_1.IOManger.getIO().to(this.roomId).emit("leaderboard", {
             leaderboard,
         });
-    }
-    next() {
-        this.activeProblems++;
-        const problem = this.problems[this.activeProblems];
-        if (problem) {
-            this.setActiveProblem(problem);
-        }
-        else {
-            // IOManger.getIO().emit("QUIZ_END", {});
-        }
     }
     genRandonString(length) {
         var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()";
@@ -117,7 +139,7 @@ class Quiz {
         if (this.currentState === CURR_STATE.question) {
             return {
                 type: CURR_STATE.question,
-                problem: this.problems[this.activeProblems],
+                problem: this.problems[this.activeProblem],
             };
         }
     }
